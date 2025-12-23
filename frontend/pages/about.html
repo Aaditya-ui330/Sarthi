@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About • Sarthi</title>
+
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/pages.css">
+
+  <!-- NEW: About page specific CSS -->
+  <link rel="stylesheet" href="/css/about.css">
+</head>
+
+<body>
+  <div id="header"></div>
+
+  <main class="about-container">
+
+    <h1 class="about-title">About Sarthi</h1>
+    <p class="about-sub">
+      A smarter, privacy-first way to understand and navigate urban safety — built from community insights and real-time data.
+    </p>
+
+    <!-- CARDS -->
+    <div class="about-grid">
+      <div class="about-card scroll-anim">
+        <h3>What Sarthi Does</h3>
+        <p>Sarthi collects quick safety impressions and blends them with contextual map data to build a time-aware understanding of how safe a place feels.</p>
+      </div>
+
+      <div class="about-card scroll-anim">
+        <h3>How It Works</h3>
+        <p>Audit reports are enriched with time-decay logic, nearby POIs, transit stops, and history. This powers dynamic heatmaps and safe-route suggestions.</p>
+      </div>
+
+      <div class="about-card scroll-anim">
+        <h3>Why It Matters</h3>
+        <p>It helps individuals make confident mobility decisions while giving planners actionable insights — all with strong privacy protections built in.</p>
+      </div>
+    </div>
+
+    <!-- INTERACTIVE INFOGRAPHIC -->
+    <section class="infographic">
+      <h3>How Safety Insights Flow Through Sarthi</h3>
+
+      <div class="flow">
+        <div class="flow-step">Users Submit Audits</div>
+        <div class="arrow">➜</div>
+        <div class="flow-step">Context & Time Decay Added</div>
+        <div class="arrow">➜</div>
+        <div class="flow-step">Safety Scores Generated</div>
+        <div class="arrow">➜</div>
+        <div class="flow-step">Heatmaps & Alerts Created</div>
+      </div>
+    </section>
+
+    <div style="margin-top:30px; display:flex; justify-content:center; gap:12px;">
+      <a class="btn-outline" href="/pages/heatmap.html">Explore Heatmap</a>
+      <a class="btn-outline" href="/pages/safe_route.html">Safe Route</a>
+      <a class="help-cta" href="/pages/help_others.html">Contribute Audit</a>
+    </div>
+
+  </main>
+
+  <div id="footer"></div>
+
+  <script type="module" src="/js/app.js"></script>
+
+  <script>
+/* Reveal on scroll (staggered) */
+const animatedEls = document.querySelectorAll('.scroll-anim');
+const revealOnScroll = () => {
+  animatedEls.forEach(el => {
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight - 80) el.classList.add('show');
+  });
+};
+window.addEventListener('scroll', revealOnScroll);
+window.addEventListener('resize', revealOnScroll);
+revealOnScroll();
+
+/* Micro-tilt effect for each card based on mouse position */
+document.querySelectorAll('.about-card').forEach(card => {
+  const inner = card.querySelector('.content-inner') || card;
+  card.addEventListener('mousemove', (e) => {
+    const rect = card.getBoundingClientRect();
+    const mx = (e.clientX - rect.left) - rect.width/2;
+    const my = (e.clientY - rect.top) - rect.height/2;
+    const rx = (-my / rect.height) * 6; // tilt X
+    const ry = (mx / rect.width) * 6;    // tilt Y
+    inner.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+  });
+  card.addEventListener('mouseleave', () => {
+    inner.style.transform = 'rotateX(0deg) rotateY(0deg)';
+  });
+});
+
+</script>
+
+</body>
+</html>

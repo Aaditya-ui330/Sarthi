@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sign in — Sarthi</title>
+
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/pages.css">
+
+  <style>
+    .auth-shell { max-width:880px; margin:56px auto; padding:0 18px; }
+    .auth-card { display:flex; gap:20px; align-items:center; padding:28px; border-radius:14px; }
+    .auth-left { flex:1; min-width:260px; }
+    .auth-right { width:340px; }
+    .mode-switch { display:flex; gap:8px; margin-bottom:12px; }
+    .mode-btn { padding:8px 12px; border-radius:8px; cursor:pointer; color:var(--muted); border:1px solid rgba(255,255,255,0.03); background:transparent }
+    .mode-btn.active { background:linear-gradient(90deg,var(--primary),var(--accent)); color:white; border:0; }
+    .terms { display:flex; gap:10px; align-items:center; margin-top:12px; color:var(--muted) }
+    .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:center; z-index:9999; }
+    .modal-card { background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); padding:20px 26px; border-radius:12px; border:1px solid rgba(255,255,255,0.06); width:320px; text-align:center; }
+    .modal-avatar { width:64px;height:64px;border-radius:12px;margin:8px auto 6px auto; object-fit:cover; }
+  </style>
+</head>
+<body>
+
+  <div id="header"></div>
+
+  <main class="auth-shell">
+    <section class="glass-card auth-card">
+      <div class="auth-left">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <h1 style="margin:0">Welcome to <span style="font-weight:800">Sarthi</span></h1>
+            <p class="small-muted" style="margin-top:6px">Find safer routes and contribute audit data to help others.</p>
+          </div>
+
+          <div class="mode-switch" role="tablist" aria-label="Auth mode">
+            <button id="btnLoginMode" class="mode-btn" aria-pressed="true" data-mode="login">Login</button>
+            <button id="btnSignupMode" class="mode-btn" data-mode="signup">Sign up</button>
+          </div>
+        </div>
+
+        <div style="margin-top:16px">
+          <p id="modeSubtitle" class="small-muted">Sign in with your Google account to continue.</p>
+
+          <label id="termsWrap" class="terms" style="display:none;">
+            <input id="termsCheckbox" type="checkbox" aria-label="Accept terms and privacy">
+            <span>I agree to the <a href="/pages/info.html#privacy" target="_blank">Privacy Policy</a> and <a href="/pages/info.html#terms" target="_blank">Terms</a>.</span>
+          </label>
+
+          <div style="margin-top:18px;">
+            <button id="googleBtn" class="btn-primary" style="display:flex;gap:10px;align-items:center">
+              <img src="/assets/google_icon.svg" alt="" style="width:18px;height:18px">
+              <span id="googleBtnText">Continue with Google</span>
+            </button>
+          </div>
+
+          <div id="authFeedback" role="alert" style="margin-top:12px;color:#ffb3b3;min-height:20px"></div>
+
+          <div style="margin-top:14px" class="small-muted">
+            <span id="bottomHint">By continuing you agree to Sarthi's terms.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="auth-right">
+        <img src="/assets/heatmap_preview.svg" alt="heatmap" style="width:100%;border-radius:10px">
+        <div style="margin-top:10px" class="small-muted">New users will have an account created automatically.</div>
+      </div>
+    </section>
+  </main>
+
+  <div id="footer"></div>
+
+  <div id="signupModal" class="modal-backdrop" style="display:none;">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <img id="modalAvatar" class="modal-avatar" src="/assets/google_icon.svg" alt="">
+      <h3 id="modalTitle" style="margin:6px 0">Welcome, <span id="modalName">Friend</span>!</h3>
+      <p class="small-muted" style="margin-bottom:6px">Thanks for joining — redirecting you to your dashboard.</p>
+    </div>
+  </div>
+
+  <!-- Firebase compat SDKs (must be before importing auth.js) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+
+  <!-- Firebase config -->
+  <script type= "module" src="./js/firebase-config.js"></script>
+
+  <!-- Load auth module early so onAuthStateChanged is installed ASAP -->
+  <script type="module" src="/js/auth.js"></script>
+
+  <!-- Robust auto-redirect helper:
+       - if ?next= is present, redirect there when sign-in completes
+       - fast-path: if stored user already exists, redirect immediately
+       - otherwise poll for up to ~4s and then give up (page stays for manual action)
+  -->
+  <script type="module">
+    import { getStoredUser, getIdToken, handleRedirectAfterAuth } from '/js/auth.js';
+
+    (async function authAutoRedirect() {
+      // only redirect if a next param exists (so auth.html can still be used standalone)
+      let next = null;
+      try {
+        const p = new URLSearchParams(window.location.search).get('next');
+        if (p && p.startsWith('/')) next = p;
+      } catch (e) { next = null; }
+
+      if (!next) {
+        // no requested return path — do not auto-redirect here; we will let onAuthStateChanged handle default redirect
+        return;
+      }
+
+      // fast path: if stored user exists, redirect immediately
+      const stored = getStoredUser();
+      if (stored) {
+        handleRedirectAfterAuth(); // respects ?next=
+        return;
+      }
+
+      // poll several signals for a short while
+      const start = Date.now();
+      const timeoutMs = 4000;
+      const interval = 300;
+
+      async function checkNow() {
+        try {
+          if (getStoredUser()) return true;
+          if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) return true;
+          const token = await getIdToken();
+          if (token) return true;
+        } catch (e) {
+          // ignore
+        }
+        return false;
+      }
+
+      const poll = setInterval(async () => {
+        if (await checkNow()) {
+          clearInterval(poll);
+          handleRedirectAfterAuth();
+        } else if (Date.now() - start > timeoutMs) {
+          clearInterval(poll);
+        }
+      }, interval);
+
+      // safety stop
+      setTimeout(() => clearInterval(poll), timeoutMs + 200);
+    })();
+  </script>
+
+  <!-- injector and UI wiring -->
+  <script type="module" src="/js/app.js"></script>
+
+  <script>
+    // UI wiring and button behaviour
+    document.addEventListener('DOMContentLoaded', () => {
+      const btnLogin = document.getElementById('btnLoginMode');
+      const btnSignup = document.getElementById('btnSignupMode');
+      const termsWrap = document.getElementById('termsWrap');
+      const googleBtnText = document.getElementById('googleBtnText');
+      const modeSubtitle = document.getElementById('modeSubtitle');
+      const feedback = document.getElementById('authFeedback');
+
+      function setModeUI(mode) {
+        if (mode === 'signup') {
+          btnLogin.classList.remove('active'); btnLogin.setAttribute('aria-pressed','false');
+          btnSignup.classList.add('active'); btnSignup.setAttribute('aria-pressed','true');
+          termsWrap.style.display = 'flex';
+          googleBtnText.textContent = 'Sign up with Google';
+          modeSubtitle.textContent = 'Create an account with your Google profile.';
+          feedback.textContent = '';
+        } else {
+          btnSignup.classList.remove('active'); btnSignup.setAttribute('aria-pressed','false');
+          btnLogin.classList.add('active'); btnLogin.setAttribute('aria-pressed','true');
+          termsWrap.style.display = 'none';
+          googleBtnText.textContent = 'Continue with Google';
+          modeSubtitle.textContent = 'Sign in with your Google account to continue.';
+          feedback.textContent = '';
+        }
+      }
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const modeParam = (urlParams.get('mode') || '').toLowerCase();
+      if (modeParam === 'signup') setModeUI('signup');
+      else setModeUI('login');
+
+      btnLogin.addEventListener('click', () => setModeUI('login'));
+      btnSignup.addEventListener('click', () => setModeUI('signup'));
+
+      // Google button handler uses oauthSignIn from /js/auth.js via dynamic import
+      const googleBtn = document.getElementById('googleBtn');
+      googleBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const mode = document.getElementById('btnSignupMode').classList.contains('active') ? 'signup' : 'login';
+        if (mode === 'signup') {
+          const termsOk = document.getElementById('termsCheckbox').checked;
+          if (!termsOk) {
+            document.getElementById('authFeedback').textContent = 'Please accept the Privacy Policy and Terms to continue.';
+            return;
+          }
+        }
+        document.getElementById('authFeedback').textContent = '';
+        googleBtn.disabled = true;
+        const oldText = googleBtn.querySelector('span').textContent;
+        googleBtn.querySelector('span').textContent = mode === 'signup' ? 'Signing up...' : 'Signing in...';
+        try {
+          const authModule = await import('/js/auth.js');
+          const oauthSignIn = authModule.oauthSignIn || (authModule.default && authModule.default.oauthSignIn);
+          await oauthSignIn('google');
+          // oauthSignIn will either return (popup) or navigate away (redirect)
+          // onAuthStateChanged in auth.js will handle final redirect; if popup sign-in completes but client did not redirect,
+          // the auto-redirect helper above (or onAuthStateChanged) will catch it.
+        } catch (err) {
+          console.error('Auth error', err);
+          document.getElementById('authFeedback').textContent = (err && err.message) ? err.message : 'Authentication failed.';
+          googleBtn.disabled = false;
+          googleBtn.querySelector('span').textContent = oldText;
+        }
+      });
+
+      // focus signup button if mode=signup
+      if (modeParam === 'signup') btnSignup.focus();
+    });
+  </script>
+</body>
+</html>

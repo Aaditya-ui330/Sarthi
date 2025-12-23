@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Safe Route — Sarthi</title>
+
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/pages.css">
+
+  <!-- Page-specific -->
+  <link rel="stylesheet" href="/css/safe_route.css">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+</head>
+<body>
+  <div id="header"></div>
+
+  <main>
+    <div class="page-grid page-wrap" role="main" aria-label="Safe Route page">
+      <!-- Left form (30%) -->
+      <aside class="card left-panel" aria-labelledby="routeTitle">
+        <h1 id="routeTitle">Safe Route</h1>
+        <p class="hint">Enter start and end addresses (or coordinates) or pick them on the map. The system will evaluate candidate routes and highlight the safest option.</p>
+
+        <form id="routeForm" novalidate>
+          <div class="field">
+            <label for="startInput">Start (address or lat, lng)</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input id="startInput" type="text" placeholder="Enter start address or coordinates" style="flex:1;" />
+              <button id="useCurrentBtn" class="btn-outline" type="button" title="Use my current location">Use my location</button>
+            </div>
+            <div id="startSuggestions" class="suggestions" aria-hidden="true"></div>
+          </div>
+
+          <div class="field">
+            <label for="endInput">End (address or lat, lng)</label>
+            <input id="endInput" type="text" placeholder="Enter destination address or coordinates" />
+            <div id="endSuggestions" class="suggestions" aria-hidden="true"></div>
+          </div>
+
+          <div class="field">
+            <label for="bandSelect">Time Band</label>
+            <select id="bandSelect">
+              <option value="night" selected>Night</option>
+              <option value="midnight" selected>MidNight</option>
+              <option value="evening">Evening</option>
+              <option value="afternoon">Afternoon</option>
+              <option value="morning">Morning</option>
+              <option value="overall">Overall</option>
+            </select>
+          </div>
+
+          <div class="controls">
+            <button id="pickStart" class="btn-outline" type="button">Pick Start</button>
+            <button id="pickEnd" class="btn-outline" type="button">Pick End</button>
+            <button id="routeBtn" class="btn-primary" type="button">Find Route</button>
+          </div>
+        </form>
+
+        <div id="routeFeedback" class="hint" role="status" aria-live="polite"></div>
+      </aside>
+
+      <!-- Right map (70%) -->
+      <section class="card map-panel" aria-label="Route map panel">
+        <div id="map" aria-label="Route map">Loading map…</div>
+
+        <div class="route-info" id="routeInfo" aria-hidden="true" style="display:none;">
+          <div id="routeSummary">No route selected</div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div id="footer"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+  <!-- Modules -->
+  <script type="module" src="/js/route.js"></script>
+  <script type="module" src="/js/app.js"></script>
+  <script type="module" src="/js/ui_helpers.js"></script>
+</body>
+</html>

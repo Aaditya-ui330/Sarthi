@@ -1,0 +1,27 @@
+:root{
+  --bg-accent: rgba(255,255,255,0.03);
+  --glass: rgba(255,255,255,0.06);
+  --glass-border: rgba(255,255,255,0.12);
+  --primary: #2b3be6;
+  --accent: #6c56ff;
+  --text: #edf0f6;
+  --muted: rgba(237,240,246,0.75);
+  --success: #20c997;
+  --danger: #ff6b6b;
+}
+
+/* Reset & base */
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:Inter, "Segoe UI", Roboto, Arial, sans-serif;
+  color:var(--text);
+  background:
+    linear-gradient(to top, rgba(0,0,0,0.35), rgba(0,0,0,0.2)),
+    url('/assets/city_blur_bg.png.png') center/cover no-repeat fixed;
+}
+
+/* small utilities */
+.container{max-width:1200px;margin:0 auto;padding:0 20px}
+.small {font-size:0.9rem}

@@ -1,0 +1,156 @@
+/* ===========================
+   ABOUT PAGE — ANIMATIONS ONLY
+   =========================== */
+
+/* Fade + zoom on scroll */
+.scroll-anim {
+  opacity: 0;
+  transform: translateY(30px) scale(0.96);
+  transition: opacity 0.65s ease-out, transform 0.65s ease-out;
+}
+
+.scroll-anim.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* Optional stagger animation 
+   (makes cards appear one by one)
+*/
+.scroll-delay-1 { transition-delay: 0.15s; }
+.scroll-delay-2 { transition-delay: 0.3s; }
+.scroll-delay-3 { transition-delay: 0.45s; }
+
+/* Improve responsiveness */
+.about-container {
+  max-width: 1100px;
+  margin: 40px auto;
+  padding: 0 20px;
+  text-align: center;
+}
+
+.about-title {
+  font-size: 2.4rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.about-sub {
+  color: var(--muted);
+  max-width: 800px;
+  margin: 0 auto 40px;
+}
+
+.about-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 26px;
+}
+
+/* Keep using your existing glass-card styling
+   (from components.css) — no change here.
+*/
+
+/* Infographic styles */
+.infographic {
+  margin: 45px auto;
+  padding: 28px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.05);
+  max-width: 900px;
+}
+
+.infographic h3 {
+  margin-bottom: 20px;
+}
+
+.flow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.flow-step {
+  flex: 1;
+  min-width: 170px;
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: background 0.25s ease, transform 0.25s ease;
+}
+
+.flow-step:hover {
+  transform: translateY(-4px);
+  background: rgba(255,255,255,0.09);
+}
+
+.arrow {
+  font-size: 22px;
+  opacity: 0.4;
+}
+
+/* ============================
+   PREMIUM ABOUT PAGE DESIGN
+   ============================ */
+
+/* Card styling */
+.about-card {
+  padding: 26px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.25);
+  text-align: left;
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+
+.about-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+}
+
+.about-card h3 {
+  margin-bottom: 10px;
+  font-size: 1.4rem;
+}
+
+/* Infographic improvements */
+.flow-step {
+  text-align: center;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+/* Mobile */
+@media (max-width: 700px) {
+
+  .about-title {
+    font-size: 1.9rem;
+  }
+
+  .about-sub {
+    text-align: left;
+    font-size: 1rem;
+  }
+
+  .about-card {
+    padding: 20px;
+  }
+
+  .flow {
+    flex-direction: column;
+    gap: 14px;
+    text-align: center;
+  }
+
+  .arrow {
+    display: none;
+  }
+
+  .flow-step {
+    width: 100%;
+  }
+}

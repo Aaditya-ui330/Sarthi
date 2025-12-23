@@ -1,0 +1,28 @@
+<!-- heatmap_preview.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="540" viewBox="0 0 860 540">
+  <defs>
+    <linearGradient id="line" x1="0" x2="1">
+      <stop offset="0" stop-color="#071029" />
+      <stop offset="1" stop-color="#052634" />
+    </linearGradient>
+    <filter id="gblur"><feGaussianBlur stdDeviation="18"/></filter>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#line)"/>
+  <!-- streets (simple grid) -->
+  <g opacity="0.18" stroke="#ffffff" stroke-width="1">
+    <path d="M0 60 H860 M0 180 H860 M0 300 H860 M0 420 H860" />
+    <path d="M80 0 V540 M220 0 V540 M360 0 V540 M500 0 V540 M640 0 V540" />
+  </g>
+
+  <!-- hot blobs -->
+  <g filter="url(#gblur)">
+    <circle cx="240" cy="220" r="70" fill="#20c997" opacity="0.95"/>
+    <circle cx="480" cy="170" r="80" fill="#ffbf00" opacity="0.9"/>
+    <circle cx="640" cy="320" r="92" fill="#ff6b6b" opacity="0.9"/>
+    <circle cx="360" cy="360" r="64" fill="#20c997" opacity="0.85"/>
+  </g>
+
+  <!-- dashed route -->
+  <path d="M80 480 C180 400, 340 380, 520 240 C640 140,760 160,820 70" stroke="rgba(255,255,255,0.85)" stroke-width="3" stroke-dasharray="10 8" fill="none" stroke-linecap="round" />
+
+</svg>

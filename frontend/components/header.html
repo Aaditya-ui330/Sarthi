@@ -1,0 +1,54 @@
+<header class="site-header glass-nav" role="navigation">
+
+  <div class="header-left">
+    <!-- Logo only on the left -->
+    <a href="/index.html" class="brand-link" aria-label="Sarthi home">
+      <img src="/assets/logo.svg" alt="Sarthi logo" class="logo">
+    </a>
+  </div>
+
+  <!-- DESKTOP NAVIGATION -->
+  <nav class="header-nav desktop-nav" aria-label="Main navigation">
+    <a href="/pages/about.html">About</a>
+    <a href="/pages/features.html">Features</a>
+    <a href="/pages/heatmap.html">View Live Map</a>
+    <a href="/pages/help_others.html" class="help-cta">Help Others!</a>
+  </nav>
+
+    <!-- Guest actions (desktop) -->
+    <div class="header-actions desktop-actions" id="guestActions">
+      <a href="/auth.html" class="btn-outline">Log in</a>
+      <a href="/auth.html?mode=signup" class="btn-primary small">Sign Up</a>
+    </div>
+
+    <!-- User menu (desktop) -->
+    <div class="header-user desktop-actions" id="userActions" aria-haspopup="true" aria-expanded="false" style="display:none;">
+      <button id="userAvatarBtn" class="avatar-btn" aria-label="Open user menu" title="Account">
+        <img id="userAvatar" class="avatar" src="/assets/default_avatar.png" alt="User avatar">
+      </button>
+
+      <div class="user-menu" id="userMenu" role="menu" aria-hidden="true">
+        <div class="user-info" id="userInfoHeader">
+          <img id="userMenuAvatarSm" class="user-info-avatar" src="/assets/default_avatar.png" alt="avatar small">
+          <div class="user-info-text">
+            <div id="userMenuName" class="user-name">Your name</div>
+            <div id="userMenuEmail" class="user-email">you@example.com</div>
+          </div>
+        </div>
+
+        <div class="menu-links" role="none">
+          <a role="menuitem" href="/dashboard.html">Dashboard</a>
+          <a role="menuitem" href="/pages/help_others.html">Help Others!</a>
+          <button role="menuitem" id="logoutBtn" class="logout-btn">Logout</button>
+        </div>
+      </div>
+    </div>
+
+  <!-- User actions -->
+  <div id="mobileUserActions" style="display:none;">
+    <a href="/dashboard.html">Dashboard</a>
+    <a href="/pages/help_others.html">Help Others!</a>
+    <button id="mobileLogoutBtn" class="logout-btn">Logout</button>
+  </div>
+
+</div>

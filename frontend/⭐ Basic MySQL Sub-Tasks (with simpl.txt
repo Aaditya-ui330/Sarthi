@@ -1,0 +1,206 @@
+⭐ Basic MySQL Sub-Tasks (with simple commands)
+1️⃣ Create a Database
+
+Task: Create a new DB
+
+CREATE DATABASE college;
+
+2️⃣ Select the Database
+
+Task: Switch to college DB
+
+USE college;
+
+3️⃣ Create a Table
+
+Task: Create a student table
+
+CREATE TABLE student (
+    id INT,
+    name VARCHAR(50),
+    age INT
+);
+
+4️⃣ Insert Records
+
+Task: Add students into the table
+
+INSERT INTO student VALUES (1, 'Dheeraj', 20);
+INSERT INTO student VALUES (2, 'Ameen', 21);
+INSERT INTO student VALUES (3, 'Aniket', 22);
+
+🚨 DELETE / DROP / REMOVE Sub-Tasks (Your Requested Section)
+5️⃣ Delete a Specific Row
+
+Task: Delete only one record
+
+DELETE FROM student WHERE id = 2;
+
+
+✔ Removes only the row where id = 2.
+
+6️⃣ Delete All Rows (Clear Table)
+
+Task: Remove all records but keep table
+
+DELETE FROM student;
+
+
+OR faster:
+
+TRUNCATE TABLE student;
+
+7️⃣ Delete a Specific Table
+
+Task: Drop the student table completely
+
+DROP TABLE student;
+
+
+✔ Table + data are removed permanently.
+
+8️⃣ Delete Multiple Tables
+
+Task: Drop more than one table
+
+DROP TABLE student, courses, marks;
+
+9️⃣ Delete a Specific Column
+
+Task: Remove the ‘age’ column
+
+ALTER TABLE student DROP COLUMN age;
+
+🔟 Delete Entire Database
+
+Task: Remove the full database
+
+DROP DATABASE college;
+
+
+⚠ This cannot be undone.
+
+⭐ EXTRA SUB-TASKS (Useful Basics)
+1️⃣1️⃣ Rename a Table
+RENAME TABLE student TO students;
+
+1️⃣2️⃣ Add a Column
+ALTER TABLE student ADD phone VARCHAR(20);
+
+1️⃣3️⃣ Modify Column Type
+ALTER TABLE student MODIFY age INT;
+
+1️⃣4️⃣ View the Table Structure
+DESC student;
+
+1️⃣5️⃣ Show All Existing Tables
+SHOW TABLES; 
+
+1️⃣ Create a Database
+Query
+CREATE DATABASE college;
+
+Explanation
+
+Creates a new database named college.
+
+Output
+Query OK, 1 row affected
+
+2️⃣ Use the Database
+Query
+USE college;
+
+Explanation
+
+Selects the database so further queries run inside it.
+
+Output
+Database changed
+
+3️⃣ Create a Table
+Query
+CREATE TABLE student (
+    id INT,
+    name VARCHAR(50),
+    age INT
+);
+
+Explanation
+
+Creates a table named student with three columns.
+
+Output
+Query OK, 0 rows affected
+
+4️⃣ Insert Records
+Query
+INSERT INTO student VALUES (1, 'Dheeraj', 20);
+INSERT INTO student VALUES (2, 'Ameen', 21);
+INSERT INTO student VALUES (3, 'Aniket', 22);
+
+Explanation
+
+Adds 3 rows into the student table.
+
+Output
+Query OK, 1 row affected
+Query OK, 1 row affected
+Query OK, 1 row affected
+
+5️⃣ Display Table Data
+Query
+SELECT * FROM student;
+
+Expected Output
++----+---------+-----+
+| id | name    | age |
++----+---------+-----+
+|  1 | Dheeraj |  20 |
+|  2 | Ameen   |  21 |
+|  3 | Aniket  |  22 |
++----+---------+-----+
+
+6️⃣ Update a Record
+Query
+UPDATE student
+SET age = 25
+WHERE id = 1;
+
+Output
+Query OK, 1 row affected
+Rows matched: 1  Changed: 1  Warnings: 0
+
+7️⃣ Delete a Specific Record
+Query
+DELETE FROM student WHERE id = 2;
+
+Output
+Query OK, 1 row affected
+
+8️⃣ Describe Table Structure
+Query
+DESC student;
+
+Output
++-------+-------------+------+-----+---------+-------+
+| Field | Type        | Null | Key | Default | Extra |
++-------+-------------+------+-----+---------+-------+
+| id    | int         | YES  |     | NULL    |       |
+| name  | varchar(50) | YES  |     | NULL    |       |
+| age   | int         | YES  |     | NULL    |       |
++-------+-------------+------+-----+---------+-------+
+
+9️⃣ Delete (Drop) the Table
+Query
+DROP TABLE student;
+
+Output
+Query OK, 0 rows affected
+
+🔟 Drop the Entire Database
+Query
+DROP DATABASE college;
+
+Output
+Query OK, 0 rows affected

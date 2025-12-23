@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Contact — Meet The Developer</title>
+
+  <!-- Global CSS -->
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/pages.css">
+
+  <!-- Page-specific CSS -->
+  <link rel="stylesheet" href="/css/contact.css">
+</head>
+<body class="landing-bg">
+
+  <!-- Header injected by /js/app.js -->
+  <div id="header"></div>
+
+  <main class="main-wrap container" style="margin-top:36px;">
+    <section class="glass-card" id="meet-dev-section" aria-labelledby="meet-dev-heading">
+      <h2 id="meet-dev-heading" class="page-heading" aria-live="polite" role="heading"></h2>
+
+      <div class="dev-reveal-wrapper" id="devReveal">
+        <div class="dev-card" id="devCard">
+          <button class="dev-photo-btn" id="devPhotoBtn" aria-label="Open developer profile">
+            <img src="/assets/dev.jpeg" alt="Developer photo" id="devPhoto" class="dev-photo" />
+          </button>
+
+          <div class="dev-info" id="devInfo" aria-hidden="true">
+            <h3 class="dev-name">Aaditya Vardhan</h3>
+
+            <div class="dev-bio" id="devBio">
+              <p>
+                <strong>Sarthi</strong> is a compact, privacy-focused app that helps users get a quick sense of how safe
+                different areas feel at different times. It combines short community impressions with contextual map
+                signals so people can make more informed decisions while traveling.
+              </p>
+
+              <p>
+                I led the development of this web app as part of our mini-project, with help from my co-developers.
+                Together we focused on making the interface clear and the experience lightweight so the app is easy to
+                use on the go.
+              </p>
+
+              <p>
+                I’m a 3rd-year AIML engineering student at BMSIT with a strong interest in machine learning and
+                crafting attractive, usable interfaces. Projects like this let me combine data, design, and engineering
+                to build practical tools.
+              </p>
+            </div>
+
+            <p class="dev-contact-note">
+              To give suggestions or for any inquiries write to
+              <a href="mailto:adivardhan.05@gmail.com" class="mailto-link" id="mailtoLink">
+                adivardhan.05@gmail.com
+                <span class="gmail-icon" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    xmlns="http://www.w3.org/2000/svg" focusable="false" aria-hidden="true">
+                    <path d="M21 6v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6"
+                      stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M3 6l9 7 9-7"
+                      stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M3 18l7-5 2 1 2-1 7 5"
+                      stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer injected by /js/app.js -->
+  <div id="footer"></div>
+
+  <!-- Load app scripts -->
+  <script type="module" src="/js/app.js"></script>
+  <script type="module" src="/js/ui_helpers.js"></script>
+
+  <!-- Contact page JS -->
+  <script>
+    (function() {
+      const CHAR_DELAY = 0.04;
+      const AUTO_EXPAND_DELAY_MS = 1200;
+      const AUTO_EXPAND_MIN_WIDTH = 880;
+
+      (function buildHeading() {
+        const headingText = 'Meet The Developer';
+        const target = document.getElementById('meet-dev-heading');
+        if (!target) return;
+
+        const frag = document.createDocumentFragment();
+        for (let i = 0; i < headingText.length; i++) {
+          const span = document.createElement('span');
+          span.className = 'char';
+          span.textContent = headingText[i];
+          span.style.animationDelay = (i * CHAR_DELAY) + 's';
+          frag.appendChild(span);
+        }
+        target.appendChild(frag);
+        requestAnimationFrame(() => target.classList.add('typing'));
+      })();
+
+      (function revealAndAutoExpand() {
+        const wrapper = document.getElementById('devReveal');
+        const card = document.getElementById('devCard');
+        const info = document.getElementById('devInfo');
+
+        let autoExpandTimer = null;
+        let userClicked = false;
+
+        const observer = new IntersectionObserver(entries => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              wrapper.classList.add('visible');
+
+              if (window.innerWidth >= AUTO_EXPAND_MIN_WIDTH) {
+                autoExpandTimer = setTimeout(() => {
+                  if (!userClicked) {
+                    card.classList.add('expanded');
+                    info.setAttribute('aria-hidden', 'false');
+                  }
+                }, AUTO_EXPAND_DELAY_MS);
+              }
+              observer.unobserve(wrapper);
+            }
+          });
+        }, { threshold: 0.18 });
+
+        observer.observe(wrapper);
+
+        const photoBtn = document.getElementById('devPhotoBtn');
+        photoBtn.addEventListener('click', e => {
+          e.preventDefault();
+          userClicked = true;
+          if (autoExpandTimer) clearTimeout(autoExpandTimer);
+
+          const expanded = card.classList.toggle('expanded');
+          info.setAttribute('aria-hidden', expanded ? 'false' : 'true');
+
+          if (expanded && window.innerWidth < AUTO_EXPAND_MIN_WIDTH) {
+            setTimeout(() => info.scrollIntoView({ behavior: 'smooth', block: 'center' }), 220);
+          }
+        });
+      })();
+    })();
+  </script>
+</body>
+</html>

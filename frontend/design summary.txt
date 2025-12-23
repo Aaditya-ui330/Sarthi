@@ -1,0 +1,381 @@
+Here is a **clean, complete CSS + UI design summary** describing every visual style, design system rule, and asset used across the entire frontend — **exactly matching your current implementation**.
+
+This will act as a *design reference sheet* for any next developer or next chat, ensuring the visual style remains consistent and no file gets overwritten.
+
+---
+
+# 🎨 **SARTHI Frontend — Full Design & CSS System Summary**
+
+This is the authoritative summary of the UI/UX design decisions implemented in your frontend.
+
+---
+
+# 1) **Global Visual Theme**
+
+### **Design Style**
+
+* **Glassmorphism + Neo-minimal**
+
+  * Transparent cards with a soft white tint
+  * Smooth blurs
+  * Thin borders
+  * Rounded corners
+* **Dark theme by default**
+
+  * Background is predominantly dark with layered atmospheric SVGs
+* **Clean typography**
+
+  * Slightly bold heading styles
+  * Muted body text
+
+### **Uses modern map-focused UI cues**
+
+* For safety dashboard, heatmaps, and controls.
+
+---
+
+# 2) **Backgrounds**
+
+### **Landing Page Background**
+
+* Class: `.landing-bg`
+* A large **full-page background image (SVG)** that looks like:
+
+  * Blurred, atmospheric city/ground aerial
+  * Slight movement using subtle opacity
+* Positioned:
+
+  ```css
+  background-image: url('/assets/bg_landing.svg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  ```
+
+### **Page Background (global)**
+
+All pages inherit:
+
+```css
+background: var(--bg);
+```
+
+Where `--bg` is a rich dark gradient defined in `base.css`:
+
+```css
+:root {
+  --bg: linear-gradient(180deg, #0b0c10 0%, #040506 100%);
+}
+```
+
+---
+
+# 3) **Color Palette (`base.css`)**
+
+You are using a **5-tone functional palette**, not conventional brand colors:
+
+### 🌈 **Brand / Accent colors**
+
+```css
+--primary: #4ea8ff;
+--accent: #ff7b00;
+```
+
+* **primary** for buttons
+* **accent** for highlighted words (hero title), route lines, avatar hover
+
+### 🎚 Neutral palette
+
+```css
+--text: #ffffff;
+--muted: #9ba1ac;
+--card: rgba(255,255,255,0.03);
+--card-border: rgba(255,255,255,0.06);
+```
+
+### 🛑 Status colors
+
+```css
+--success: #20c997;
+--warning: #ffbf00;
+--danger: #ff6b6b;
+```
+
+These are used in:
+
+* Score coloring
+* Submit-audit form feedback
+* Dashboard markers
+* Charts
+
+---
+
+# 4) **Typography**
+
+### **Font**
+
+* Using **system-ui** font stack for performance.
+* Defined as:
+
+```css
+font-family: 'Inter', system-ui, sans-serif;
+```
+
+### **Text sizing**
+
+* `h1` ~ 2.8rem (hero)
+* Section titles: 1.6–2.0rem
+* Buttons: 0.95rem
+* Small muted text: 0.9rem
+
+---
+
+# 5) **Glass Card Components**
+
+Central to the entire design system.
+
+### `.glass-card`
+
+```css
+background: rgba(255,255,255,0.03);
+border: 1px solid rgba(255,255,255,0.06);
+backdrop-filter: blur(12px);
+border-radius: 16px;
+padding: 24px;
+```
+
+Used in:
+
+* hero section
+* auth card
+* audit card
+* dashboard cards
+
+---
+
+# 6) **Buttons (`components.css`)**
+
+### **Primary button**
+
+```css
+.btn-primary {
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  padding: 10px 20px;
+  border-radius: 12px;
+  color: white;
+  border: none;
+  font-weight: 600;
+}
+.btn-primary:hover {
+  opacity: 0.9;
+}
+```
+
+### **Ghost button**
+
+Transparent, subtle border:
+
+```css
+.btn-ghost {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 10px;
+  border-radius: 10px;
+}
+```
+
+### **Outline button**
+
+```css
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  border-radius: 10px;
+}
+```
+
+---
+
+# 7) **Navigation Header**
+
+Located in `/components/header.html`.
+
+### Structure:
+
+* Logo (from `/assets/logo.svg`)
+* Links (About, Features, Map, Help Others!)
+* User area:
+
+  * When logged out: **Login | Sign Up**
+  * When logged in: **Avatar dropdown**
+
+### Avatar style:
+
+```css
+.nav-avatar {
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  border: 2px solid transparent;
+  transition: border-color 0.2s ease;
+}
+.nav-avatar:hover {
+  border-color: var(--accent);
+}
+```
+
+### Dropdown menu:
+
+* Glass card style
+* Width: 220px
+* Shadow: `0 6px 24px rgba(0,0,0,0.35)`
+* Smooth fade-in animation
+
+---
+
+# 8) **Forms**
+
+Common to auth and audit forms:
+
+```css
+input, select, textarea {
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  color: var(--text);
+  width: 100%;
+}
+```
+
+Labels are:
+
+```css
+label {
+  color: var(--muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+```
+
+---
+
+# 9) **Iconography (SVG assets)**
+
+### Required assets in `/assets/`:
+
+| Asset                                     | Purpose                                |
+| ----------------------------------------- | -------------------------------------- |
+| `logo.svg`                                | Navigation bar logo                    |
+| `google_icon.svg`                         | Google sign-in button                  |
+| `heatmap_preview.svg`                     | Landing-page mini heatmap illustration |
+| `bg_landing.svg`                          | Main landing background                |
+| `default_avatar.png / default_avatar.svg` | Fallback for user avatar               |
+| `marker_icons/`                           | Custom icons for heatmap or markers    |
+
+### Marker icon style (if used):
+
+* 32×32 or 24×24 px
+* White border stroke (#fff)
+* Glow/shadow optional
+
+You are currently using **Leaflet default markers**, but the structure supports custom SVG markers later.
+
+---
+
+# 10) **Maps**
+
+All maps are styled and initialized through `/js/map.js`.
+
+### Tile source:
+
+```js
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png")
+```
+
+### Marker style (dashboard):
+
+```js
+L.circleMarker([lat,lng], {
+  radius: 7,
+  fillColor: color,
+  color: '#fff',
+  weight: 1,
+  fillOpacity: 0.9
+})
+```
+
+### Heatmap:
+
+Uses **leaflet.heat** plugin:
+
+```js
+L.heatLayer(points, { radius: 25, blur: 15 })
+```
+
+---
+
+# 11) **Chart Styling (Dashboard)**
+
+Canvas-based line chart:
+
+* Color: `var(--primary)`
+* Fill gradient: soft overlay `rgba(78,168,255,0.25)`
+* Axis text: `var(--muted)`
+* Line width: 3px
+* Dots: 5px radius, fill = `var(--accent)`
+
+---
+
+# 12) **Animations**
+
+### Avatar hover:
+
+```css
+transition: border-color 0.22s ease, transform 0.15s ease;
+.nav-avatar:hover { transform: scale(1.06); }
+```
+
+### Dropdown fade-in:
+
+```css
+@keyframes fadeUp {
+  from { opacity:0; transform: translateY(6px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+.user-dropdown { animation: fadeUp 0.22s ease; }
+```
+
+### Hero elements:
+
+Slight fade/slide transitions used in `pages.css`.
+
+---
+
+# 13) **Responsive Rules**
+
+* At width < 900px → hero becomes vertical, map previews shrink
+* Dashboard → collapses 2 columns → 1 column
+* Auth card → vertical layout
+* Buttons stack if space is insufficient
+
+---
+
+# 14) **Spacing & Layout System**
+
+Common padding:
+
+* Sections: 28–32px
+* Cards: 18–24px
+* Grid gaps: 18–24px
+
+Rounded corners:
+
+* Maps: 10px
+* Cards/buttons: 12–16px
+* Inputs: 10–12px
+
+---
+
+# ✔️ **This summary is now your canonical design spec.**

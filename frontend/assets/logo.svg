@@ -1,0 +1,19 @@
+<!-- logo.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="64" viewBox="0 0 240 64" fill="none">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1">
+      <stop offset="0" stop-color="#2b3be6"/>
+      <stop offset="1" stop-color="#6c56ff"/>
+    </linearGradient>
+  </defs>
+
+  <!-- shield mark -->
+  <g transform="translate(8,6)">
+    <path d="M20 2 L36 8 L36 22 C36 34 28 48 20 56 C12 48 4 34 4 22 L4 8 Z"
+          fill="url(#g)"/>
+    <path d="M20 6 L28 10 L28 20 C28 30 22 40 20 42 C18 40 12 30 12 20 L12 10 Z" fill="rgba(255,255,255,0.14)"/>
+  </g>
+
+  <!-- text -->
+  <text x="64" y="40" font-family="Inter, Roboto, Arial, sans-serif" font-size="28" fill="#ffffff" font-weight="700">Sarthi</text>
+</svg>

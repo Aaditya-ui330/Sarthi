@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dashboard — Sarthi</title>
+
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/pages.css">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+
+  <style>
+    /* Dashboard-specific */
+    .dashboard-grid { display:grid; grid-template-columns: 320px 1fr; gap:20px; max-width:1200px; margin:28px auto; padding:0 18px;}
+    .card { background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:18px; border-radius:12px; }
+    .profile-avatar { width:64px; height:64px; border-radius:12px; object-fit:cover; }
+    .stat-row { display:flex; gap:10px; margin-top:12px; }
+    .stat { flex:1; background:rgba(255,255,255,0.02); padding:12px;border-radius:8px;text-align:center }
+    #userMap { width:100%; height:360px; border-radius:8px; overflow:hidden; }
+    table.audits { width:100%; border-collapse:collapse; margin-top:12px; }
+    table.audits td, table.audits th { padding:8px 6px; border-bottom:1px solid rgba(255,255,255,0.03); text-align:left; }
+    .small-muted { color:var(--muted); font-size:0.95rem; }
+    .actions { display:flex; gap:8px; margin-top:12px; }
+    #auditsChart { width:100%; height:140px; display:block; border-radius:8px; margin-top:12px; background:transparent; }
+    @media (max-width:880px) {
+      .dashboard-grid { grid-template-columns: 1fr; }
+      #userMap { height:260px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- injected header -->
+  <div id="header"></div>
+
+  <main>
+    <div class="container">
+      <h2 style="margin-top:18px">Your Dashboard</h2>
+
+      <div class="dashboard-grid" aria-live="polite">
+        <!-- Left column -->
+        <aside>
+          <div class="card" id="profileCard" aria-label="Profile card">
+            <div style="display:flex;gap:12px;align-items:center">
+              <img id="avatarImg" class="profile-avatar" src="/assets/default_avatar.png" alt="avatar">
+              <div>
+                <div id="userName" style="font-weight:700">User</div>
+                <div id="userEmail" class="small-muted">email@example.com</div>
+              </div>
+            </div>
+
+            <div class="stat-row" role="status" aria-atomic="true" style="margin-top:18px">
+              <div class="stat">
+                <div id="totalAudits" style="font-size:1.6rem">0</div>
+                <div class="small-muted">Total audits</div>
+              </div>
+              <div class="stat">
+                <div id="areasMapped" style="font-size:1.6rem">0</div>
+                <div class="small-muted">Areas</div>
+              </div>
+            </div>
+
+            <div class="actions" style="margin-top:16px">
+              <button id="btnExport" class="btn-outline" type="button">Export CSV</button>
+              <button id="btnLogout" class="btn-ghost" type="button">Sign out</button>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:14px">
+            <h4 style="margin:0 0 8px 0">Quick Links</h4>
+            <nav class="small-muted" aria-label="Quick links">
+              <a href="/pages/help_others.html">Submit Audit</a><br/>
+              <a href="/pages/heatmap.html">Explore heatmap</a><br/>
+              <a href="/pages/safe_route.html">Find safe routes</a>
+            </nav>
+          </div>
+        </aside>
+
+        <!-- Right column -->
+        <section>
+          <div class="card">
+            <h3 style="margin-top:0">Your contribution map</h3>
+            <div id="userMap" role="region" aria-label="Map showing contributions">Loading map…</div>
+            <div class="small-muted" style="margin-top:8px">Your submitted audit points are shown above.</div>
+            <!-- Monthly chart canvas -->
+            <canvas id="auditsChart" width="800" height="140" aria-label="Audits per month chart"></canvas>
+          </div>
+
+          <div class="card" style="margin-top:16px">
+            <h3 style="margin-top:0">Recent audits</h3>
+            <table class="audits" id="auditsTable" aria-describedby="audits-desc">
+              <caption id="audits-desc" class="small-muted" style="text-align:left">Latest submissions by you</caption>
+              <thead>
+                <tr><th>When</th><th>Lat</th><th>Lng</th><th>Score</th></tr>
+              </thead>
+              <tbody>
+                <!-- filled by js -->
+              </tbody>
+            </table>
+            <div id="auditsEmpty" class="small-muted" style="display:none;margin-top:8px">No audits yet — help others by submitting one!</div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- injected footer -->
+  <div id="footer"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <!-- Leaflet heat plugin (optional, used by initUserContribMap if present) -->
+  <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+
+  <!-- app scripts -->
+  <script type="module" src="/js/app.js"></script>
+  <script type="module" src="/js/dashboard.js"></script>
+
+</body>
+</html>

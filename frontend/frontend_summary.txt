@@ -1,0 +1,160 @@
+# 1) Recommended next steps (priority order)
+
+1. Finalize **API contract** (one short doc): list of endpoints the frontend expects and exact request/response JSON shapes. (Small, high value — prevents rework.)
+2. Implement `api.js` — thin wrapper around `fetch` for all backend calls (handles base URL, retries, error normalization). Use `getIdToken()` from `auth.js` to attach `Authorization` header. Replace any direct `fetch('/api/...')` in pages with `api.js` calls.
+3. Complete **Heatmap page** (`pages/heatmap.html` + `pages/heatmap.js`) to call `/api/heatmap` and render using `initHeatmap` or `initUserContribMap`. Add filters (time-range).
+4. Finish **Safe Route page** (`pages/safe_route.html` + `route.js`) to call `/api/route` with origin/destination and show route(s) on map.
+5. Flesh out **Profile** page (`profile.html`) to show and let user edit profile (name/picture), show token revoke actions.
+6. Harden UI helpers: `ui_helpers.js` (toasts, confirm modal, global spinner), and `validators.js` for inputs. Replace inline alerts.
+7. Add tests / dev-time fixtures: `static/sample_response.json` and a `DEV_MODE` flag in `api.js` to use local samples for frontend-only dev.
+8. Polish & accessibility audit: keyboard nav, color contrast checks, ARIA labels.
+9. Deployment & README: document how to serve static files, set `API_URL`, and CORS settings on backend. Add small CI/hosting notes.
+
+# 2) Canonical frontend folder structure (final — use this exact tree)
+
+```
+/frontend
+├─ index.html                      # Landing page (hero, search, mini-map, CTAs)
+├─ auth.html                       # Unified Login/Signup (Google via Firebase)
+├─ dashboard.html                  # User dashboard (contribs, map, chart)
+├─ profile.html                    # Account settings & revoke tokens (to build)
+├─ pages/
+│  ├─ heatmap.html                 # Fullscreen heatmap + filters (to build)
+│  ├─ help_others.html             # Help Others! (audit submit page) — implemented
+│  ├─ safe_route.html              # Safe route UI + results (to build)
+│  └─ info.html                    # About / privacy / FAQ / support
+├─ components/
+│  ├─ header.html                  # Nav + user avatar dropdown — implemented
+│  ├─ footer.html                  # Footer partial (injected) — implemented
+│  ├─ modal_submit.html            # Submit modal (optional partial)
+│  └─ card_audit.html              # Audit card component (optional)
+├─ assets/
+│  ├─ logo.svg
+│  ├─ heatmap_preview.svg
+│  ├─ google_icon.svg
+│  ├─ default_avatar.png
+│  └─ marker_icons/                 # custom map markers (add PNG/SVGs)
+├─ css/
+│  ├─ base.css                      # variables, fonts, color palette
+│  ├─ components.css                # buttons, nav, cards, form inputs
+│  └─ pages.css                     # page-specific styling
+├─ js/
+│  ├─ app.js                        # injector, header/footer load, header user state (implemented)
+│  ├─ auth.js                       # Firebase compat auth helper (implemented)
+│  ├─ api.js                        # API wrapper (TO ADD)  ← high priority
+│  ├─ map.js                        # Leaflet helpers (implemented)
+│  ├─ dashboard.js                  # Dashboard logic + chart (implemented)
+│  ├─ help_others.js                # Submit-audit page logic (implemented)
+│  ├─ route.js                      # Safe-route UI (TO ADD)
+│  ├─ heatmap.js                    # Heatmap page logic (TO ADD)
+│  ├─ ui_helpers.js                 # toasts, loaders, modals (TO ADD)
+│  └─ validators.js                 # input validation helpers (TO ADD)
+├─ libs/
+│  ├─ leaflet/                      # optional local copy or use CDN
+│  └─ leaflet.heat.js               # heat plugin (or CDN)
+├─ static/
+│  └─ sample_response.json          # fixtures for dev (TO ADD)
+├─ API_MAP.md                       # frontend → backend endpoints & payloads (TO ADD)
+├─ README.md                        # setup, env, CORS, build instructions (TO ADD)
+└─ .gitignore
+```
+
+# 3) Brief summary — what we implemented (completed items)
+
+* **Auth**
+
+  * `auth.html` (unified login/signup), `auth.js` robustly loads compat Firebase SDK, manages popup/redirect sign-in, stores `sarthi_user_v1` in localStorage, exposes `getIdToken()`, `getStoredUser()`, `logout()`, `oauthSignIn()` and `handleRedirectAfterAuth()`.
+  * Correct `?mode=signup` handling and `?next=` redirect after login.
+* **Header Injection & UX**
+
+  * `app.js` injects `components/header.html` and `components/footer.html`.
+  * Header shows **Login / Sign Up** when guest; shows **avatar + dropdown** (name/email + Dashboard/Profile/Help Others/Logout) when logged in. Dropdown is styled, accessible, and non-clipping.
+* **Help Others (Submit Audit)**
+
+  * `pages/submit_audit.html` (Help Others) with audit form and map container.
+  * `help_others.js` handles form validation, anonymous vs linked submission logic, requires login when linking, POSTs to `/api/submit_audit`.
+  * `map.js` contains `initSubmitMap()` which allows click-to-place and draggable marker and returns coordinates via callback.
+* **Dashboard**
+
+  * `dashboard.html` and `dashboard.js` implemented: shows profile card, stats (total audits, areas), map (`#userMap`), recent audits list, CSV export, sign-out, and **audits-per-month canvas chart** (vanilla JS).
+  * `map.js` added `initUserContribMap(containerId, audits)` helper to draw markers + heatmap.
+* **Map helpers**
+
+  * `map.js` implemented: `getUserLocation`, `initSubmitMap`, `initHeatmap`, `initRouteMap`, `addMarkers`, `initUserContribMap`.
+* **UX polish**
+
+  * Avatar hover animation to `--accent`, dropdown styling, small accessibility improvements.
+
+# 4) What’s left / recommended to add (concrete list)
+
+1. **api.js** (urgent): centralized wrapper for backend calls (base URL, attaching id token, error handling). Replace direct `fetch` calls with it.
+2. **Heatmap page** (`pages/heatmap.html` + `heatmap.js`): visual filters, time-range, call `/api/heatmap?bbox=...&range=...`.
+3. **Safe Route** (`pages/safe_route.html` + `route.js`): UI to input origin/destination, call `/api/route` and visualize routes with scores.
+4. **Profile page**: show editable profile fields; allow sign-out and token revoke if your backend supports it.
+5. **API_MAP.md**: document endpoints and JSON shapes (see below suggested endpoints).
+6. **UI helpers & validators**: `ui_helpers.js` (toasts, confirm modal), `validators.js`.
+7. **Move Firebase config to environment/config file**: `auth.js` currently uses hard-coded config — better to read from a small `config.js` or have README instructions to set the keys.
+8. **CORS & auth verification**: ensure backend accepts `Authorization: Bearer <firebase-id-token>` and validates with Firebase Admin. Update README with CORS instructions.
+9. **Dev fixtures & offline mode**: `static/sample_response.json` and `DEV=true` toggle in `api.js` so frontend dev can continue without backend.
+10. **Testing & QA**: basic functional smoke tests, check mobile/responsive, accessibility.
+
+# 5) Expected backend endpoints & payload shapes (suggested)
+
+Put these in `API_MAP.md` — frontend depends on them:
+
+1. `POST /api/submit_audit`
+
+   * Headers: `Authorization: Bearer <idToken>` if linked; otherwise omitted.
+   * Body (JSON):
+
+     ```json
+     {
+       "lat": 12.345678,
+       "lng": 98.765432,
+       "lighting": 2,
+       "visibility": 3,
+       "cctv": true,
+       "crowd_density": "low",
+       "crime_observed": "none",
+       "security_present": false,
+       "notes": "short text",
+       "timestamp": 1670000000
+     }
+     ```
+   * Response: 201 or 200 with created audit object or `{ok:true}`.
+
+2. `GET /api/user/audits`
+
+   * Requires `Authorization` header.
+   * Response: `[{ lat, lng, timestamp, lighting, visibility, cctv, crowd_density, calculated_score?, notes?, created_at? }, ...]`
+
+3. `GET /api/heatmap?bbox=minLng,minLat,maxLng,maxLat&range=30d`
+
+   * Response: `[{ lat, lng, intensity }, ...]` (or aggregated tiles).
+
+4. `POST /api/route`
+
+   * Body: `{ "origin": [lat,lng], "destination": [lat,lng], "mode": "walking" }`
+   * Response: `{ routes: [{ polyline, score, segments: [...] }, ...] }` — frontend will map route geometry to Leaflet polyline and display score.
+
+5. `GET /api/me` (optional)
+
+   * Return user profile (id, name, email, created_at, audits_count).
+
+# 6) Important integration & deployment notes
+
+* **Firebase ID tokens** are short-lived. Backend should verify tokens server-side using Firebase Admin SDK. Frontend uses `getIdToken()` to attach tokens.
+* **CORS**: allow your frontend origin; allow `Authorization` header.
+* **Auth config**: you may want to move `FIREBASE_CONFIG` out of code and into a `config.sample.js` or set up an environment variable during build.
+* **Assets**: add these to `/assets/` if missing: `default_avatar.png`, `logo.svg`, `heatmap_preview.svg`, `google_icon.svg`, any marker icons.
+* **Avoid loading both modular + compat Firebase SDKs** on the same page — stick to compat for current code or port all auth to modular API if you prefer modern approach.
+
+# 7) Ready-made TODO checklist for the next chat (copy/paste)
+
+* [ ] Add `api.js` wrapper and replace inline fetches.
+* [ ] Implement `/pages/heatmap.html` + `heatmap.js` (call `/api/heatmap`).
+* [ ] Implement `/pages/safe_route.html` + `route.js` (call `/api/route`).
+* [ ] Create `profile.html` and backend `GET /api/me` to populate it.
+* [ ] Move Firebase config to `config.js` or env and update README.
+* [ ] Add `static/sample_response.json` for dev mode.
+* [ ] Add README instructions for running locally and CORS notes.
