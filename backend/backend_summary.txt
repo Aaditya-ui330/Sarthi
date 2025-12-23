@@ -1,0 +1,383 @@
+# backend_summary.txt
+
+Project: Safety Audit — Backend
+Purpose: Crowdsourced safety audits, time-weighted heatmaps, confidence reporting, conservative alerts, and safe-route evaluations.
+Author / Maintainer: (Project team) — primary developer: `aaditya-ui330`
+Repo layout (root-level overview)
+
+```
+/backend
+├─ app.py                       # Flask app entrypoint (registers blueprints, CORS, Swagger/OpenAPI)
+├─ config.py                    # global constants and paths (PIPELINE_PATH, AUDIT_FILE, ADMIN_TOKEN, etc.)
+├─ audits_data.json             # persisted audit records (runtime, small)
+├─ historical_audits.csv        # seed / training dataset (synthetic/real)
+├─ requirements.txt             # Python dependencies
+├─ safety_model.joblib          # legacy single model artifact (if present)
+├─ safety_pipeline.joblib       # full preprocessing+model sklearn pipeline (used by app)
+├─ train.py                     # training script that builds pipeline and saves safety_pipeline.joblib
+├─ synth_data_generator.py      # synthetic data generator (seed dataset)
+├─ train_and_reload.py          # automation: run train.py then POST /admin/reload_model (supports --run-once / --interval)
+├─ models/
+│   └─ pipeline_loader.py       # helper to load pipeline safely
+├─ routes/
+│   ├─ audit_routes.py          # submit audit, heatmap_data, aggregates endpoints
+│   ├─ heatmap_routes.py        # detailed heatmap / aggregation endpoints (might be combined with audit_routes)
+│   ├─ route_routes.py          # safe_route evaluation endpoint
+│   └─ admin_routes.py          # admin endpoints (reload model)
+├─ services/
+│   ├─ audit_service.py         # audit persistence and helper functions
+│   ├─ heatmap_service.py       # aggregation, confidence, decay, polygon sampling helpers
+│   ├─ routing_service.py       # safe-route evaluation logic (route scoring)
+│   └─ geospatial.py            # grid, cell id, distance, ST-pyramid helper utils
+├─ utils/
+│   └─ geocode.py               # geocoding proxy (Nominatim) and address <-> latlng helpers
+```
+
+---
+
+# High-level architecture / flow
+
+1. **Ingestion**
+
+   * `POST /api/submit_audit`: client sends a JSON audit (lighting, visibility, crowd_density, cctv, crime_rate, poi_type, security_present, lat, lng, optional timestamp, optional user auth header).
+   * `routes.audit_routes.submit_audit` featurizes data (legacy numpy-featurize and `build_input_df` for pipeline), uses the loaded pipeline (`safety_pipeline.joblib`) for predicted safety probability (or falls back), appends time_band (morning/afternoon/evening/night/midnight), persists record to `audits_data.json` and/or DB.
+
+2. **Storage & persistence**
+
+   * `audits_data.json` keeps app-submitted audits (trimmed to MAX_AUDITS).
+   * `historical_audits.csv` used to seed and train pipeline (train.py).
+   * The system respects privacy by limiting raw trace retention; raw traces persisted only in `audits_data.json` for the prototype.
+
+3. **Model & pipeline**
+
+   * `train.py` builds a sklearn pipeline (preprocessing: numeric scaling, one-hot encoding of categorical poi/security; model: logistic regression or lightgbm depending on config), saves to `safety_pipeline.joblib`.
+   * `models.pipeline_loader` loads pipeline at startup; `admin_routes.reload_model` can reload from disk.
+
+4. **Visualization & heatmaps**
+
+   * `GET /api/heatmap_data`: returns time-band filtered, exponentially-decayed, weighted points for heatmap rendering.
+   * Additional endpoints: `/api/heatmap_aggregates` (per-cell aggregates with samples/confidence), `/api/aggregates_near` (search by lat/lng or address), etc. Aggregation uses spatial binning (grid cell ids) and rounds coords when grouping.
+
+5. **Confidence / uncertainty**
+
+   * Each heatmap cell returns: `score` (avg weighted), `samples` (count), `confidence_numeric` and `confidence` (low / medium / high) based on sample thresholds. Numeric confidence can be derived from sample count and effective sample weight.
+
+6. **Route evaluation**
+
+   * `POST /api/safe_route` accepts `start`, `end`, `band`, `step_m`, and optionally `candidates` (list of candidate polylines).
+   * If candidates not provided, the routing service can call an external directions API (or mock) to produce candidate polylines.
+   * Each candidate is sampled every `step_m` meters; each sample point is mapped to the nearest heatmap cell and evaluated (score + confidence). Routes are ranked by combined metrics (avg_score weighted by confidence/coverage). Response includes `all_evaluations` and `best_route`.
+
+7. **Admin & automation**
+
+   * `POST /admin/reload_model` expects `X-ADMIN-TOKEN` header and reloads `safety_pipeline.joblib` in memory.
+   * `train_and_reload.py` automates training and attempts to POST reload to running server (can run weekly or on-demand).
+
+---
+
+# Configs (config.py)
+
+Important variables (defaults your files likely contain, please confirm in config.py):
+
+```py
+PIPELINE_PATH = "safety_pipeline.joblib"
+AUDIT_FILE = "audits_data.json"
+HISTORICAL_CSV = "historical_audits.csv"
+ADMIN_TOKEN = "dev-token"  # change in prod, used by train_and_reload and admin endpoints
+JWT_SECRET = "dev-jwt-secret"  # (if auth implemented)
+GEOSEARCH_URL = "https://nominatim.openstreetmap.org/search"
+```
+
+Place secrets / production overrides in environment variables; load them via `os.getenv` in `config.py`.
+
+---
+
+# Endpoints (detailed) — request / response examples
+
+### 1) Health / root
+
+```
+GET /
+200 OK
+"✅ Flask Safety Audit API is running! Use /api/submit_audit or /api/heatmap_data"
+```
+
+### 2) Submit audit
+
+```
+POST /api/submit_audit
+Headers: Content-Type: application/json
+Body example:
+{
+  "lighting": 3,
+  "visibility": 4,
+  "crowd_density": "medium",
+  "cctv": "yes",
+  "crime_rate": 1,
+  "poi_type": "market",
+  "security_present": "no",
+  "lat": 12.9721,
+  "lng": 77.5950,
+  "timestamp": 1700000000
+}
+
+Response (201):
+{
+  "message": "Audit submitted",
+  "time_band": "night",
+  "calculated_score": 0.812
+}
+```
+
+If Authorization header present (`Authorization: Bearer <token>`), backend optionally extracts `user_id` and adds `user_id` to saved audit record.
+
+### 3) Heatmap data (points)
+
+```
+GET /api/heatmap_data?band=night&min_samples=1
+Response 200:
+[
+  {"lat":12.9721, "lng":77.595, "score":0.81, "samples":4, "confidence_numeric":2, "confidence":"medium"},
+  ...
+]
+```
+
+### 4) Heatmap aggregates (per-cell detailed)
+
+```
+GET /api/heatmap_aggregates?band=evening&min_samples=3
+Response 200:
+{
+  "cells": [
+    {"cell_id":"12972:77595", "lat":12.9721, "lng":77.5950, "score":0.76, "samples":4, "confidence_numeric":2, "confidence":"medium"}
+  ],
+  "count": 1
+}
+```
+
+### 5) Aggregates near / geocode proxy
+
+```
+GET /api/aggregates_near?lat=12.9721&lng=77.5950&radius_m=500
+GET /api/aggregates_near?address=MG%20Road%20Bengaluru&radius_m=1000
+```
+
+If `address` used, backend calls Nominatim to geocode.
+
+### 6) Safe route (evaluate)
+
+```
+POST /api/safe_route
+Body (example):
+{
+  "start": [12.9716, 77.5946],
+  "end": [13.1000, 77.5960],
+  "band": "night",
+  "step_m": 50,
+  "candidates": [
+    [[12.9716,77.5946],[12.9750,77.5960],[13.1000,77.5960]],
+    [[12.9716,77.5946],[12.9650,77.5900],[13.1000,77.5960]]
+  ]
+}
+Response (200):
+{
+  "all_evaluations": [
+    {"route":[[lat,lng],...], "eval": { "avg_score": 0.67, "avg_conf": 0.5, "coverage": 0.8, "known_points": 12, "per_point":[ ... ] }},
+    ...
+  ],
+  "best_route": [[...]],
+  "best_eval": { ... },
+  "candidates_evaluated": 3
+}
+```
+
+If `avg_score` is `null` / `confidence` is `0`, it indicates no nearby audit data for those sampled points (normal for under-sampled regions).
+
+### 7) Admin reload model
+
+```
+POST /admin/reload_model
+Headers: X-ADMIN-TOKEN: <token>
+Response 200: {"message": "pipeline reloaded"}
+403 if token mismatched
+```
+---
+
+# Model training & automation
+
+### `train.py`
+
+* Reads `historical_audits.csv` (must contain feature columns):
+
+  * numeric: `lighting`, `visibility`, `crime_rate`
+  * categorical / encoded: `crowd_density`, `cctv`, `poi_type`, `security_present`
+  * label: `overall_safe` (0/1)
+  * optional: `lat`, `lng` (not used directly by model)
+* Encodes categorical fields (LabelEncoder for crowd, map for cctv, OneHot/ColumnTransformer for poi_type/security) and trains a classifier (LogisticRegression or LightGBM), saves pipeline to `safety_pipeline.joblib`.
+* Produces classification report + saves artifact.
+
+### `synth_data_generator.py`
+
+* Generates N synthetic rows (optionally geo-located) to seed `historical_audits.csv`.
+* CLI supports `--n`, `--out`, `--geo` options.
+
+### `train_and_reload.py`
+
+* Orchestrates `python train.py` subprocess.
+* After successful training, checks that `safety_pipeline.joblib` exists.
+* Posts to `/admin/reload_model` with header `X-ADMIN-TOKEN` (value from env or `config.ADMIN_TOKEN`).
+* CLI flags: `--run-once`, `--interval`, `--server`, `--admin-token`, `--python`.
+
+---
+
+# Data shapes & cell/grid conventions
+
+* Cells: spatial unit used for aggregation are computed by converting lat/lng to `cell_x:cell_y` strings often by rounding or multiplying lat/lng (e.g., tile coordinate or fixed-degree grid), commonly `round(lat, 4)` / `round(lng, 4)` for grouping in prototype.
+* Time bands: derived from UNIX timestamp to `morning/afternoon/evening/night/midnight`.
+* Time decay: exponential decay `weight = exp(-lambda_decay * age_days)` where `lambda_decay` configured in `heatmap_service.py` (default small like 0.001); weighted scores combine recency & historic.
+
+---
+
+# Privacy & ethics safeguards (implemented / recommended)
+
+* Raw traces retained briefly; long-term dataset aggregated only. (Prototype keeps `audits_data.json` but design suggests trimming to MAX_AUDITS.)
+* Aggregation thresholds: do not publish cells with samples < threshold (configurable).
+* Optional differential-privacy can be applied to public exports (not implemented but planned).
+* Provide explicit consent mechanisms in frontend (ask user to opt-in to link audits to account).
+* Allow rounding / coarse-graining of lat/lng to protect exact locations.
+
+---
+
+# How to run (dev)
+
+1. Create and activate virtualenv:
+
+```bash
+python -m venv venv
+source venv/bin/activate   # or .\venv\Scripts\activate on Windows
+pip install -r requirements.txt
+```
+
+2. Ensure `safety_pipeline.joblib` exists. If not, generate training data or run:
+
+```bash
+python synth_data_generator.py --n 2000 --out historical_audits.csv
+python train.py
+```
+
+3. Run server:
+
+```bash
+python app.py
+# listens by default on http://127.0.0.1:5000
+```
+
+4. Test endpoints via `curl` or Postman (examples above). For admin reload, include `X-ADMIN-TOKEN`.
+
+5. For automated retrain:
+
+```bash
+python train_and_reload.py --run-once
+# Or run with --interval 604800 for weekly retrain (but prefer using CI/scheduler)
+```
+
+---
+
+# Frontend integration notes (HTML/CSS/JS SPA planned)
+
+* **Map**: Leaflet + leaflet.heat for quick heatmap visualization; backend `/api/heatmap_data` supplies points. Client draws heat layer and markers with popups showing `score`, `samples`, `confidence`.
+* **Submit Audit UI**: Provide manual lat/lng input, map-click fill, and geolocation. Submit JSON to `/api/submit_audit`. Offer "Submit anonymously" toggle; if logged in, include `Authorization: Bearer <token>`.
+* **Safe Route UI**: Let user supply `start` and `end` (text or map), or automatically request several routes via Directions API if not providing `candidates`. Send `POST /api/safe_route`, draw returned polylines and highlight `best_route`.
+* **Auth flow (future)**:
+
+  * Keep username/password login endpoints on backend for simple auth.
+  * For provider login (Google/GitHub), choose **frontend-first** ID token approach for Google (JS) or **backend redirect** for GitHub, then the backend verifies provider token and issues app JWT. Store JWT in localStorage or cookie and send `Authorization` header on protected requests.
+  * `POST /auth/google` verify `id_token` with `google-auth` lib; call `create_or_get_user_from_provider` in `services/auth_service.py`.
+  * `/auth/login` returns `access_token` (JWT) that frontend uses for subsequent requests.
+
+---
+
+# Testing checklist / QA
+
+* Unit test suggestions:
+
+  * `train.py` pipeline training outputs consistent shapes (use sklearn `check_estimator` style checks).
+  * `heatmap_service` aggregation: given synthetic points, expected aggregated cells and confidence buckets.
+  * `routing_service` evaluation: sample a simple route and assert per-point mapping.
+* Manual tests:
+
+  * Submit audits with valid/invalid payloads, observe `201` vs `400`.
+  * Query `/api/heatmap_data` with `band` filters, check decay weighting by submitting audits with different timestamps.
+  * Trigger `train_and_reload.py` and watch server log for reload success.
+  * Use Postman collection (recommended) with requests described earlier.
+
+---
+
+# Next-step checklist for frontend + auth integration
+
+1. Implement frontend (HTML/CSS/JS) with:
+
+   * Leaflet map, heatmap, submission form (provided template).
+   * Safe-route UI that POSTs `start, end, step_m` and optionally receives candidate polylines.
+2. Add auth blueprint (optional now):
+
+   * `routes/auth_routes.py` and `services/auth_service.py` (SQLite + `werkzeug.security` + JWT via `PyJWT`).
+   * Optional OAuth provider endpoints (`/auth/google` to verify ID token).
+3. Add server-side optional linking of audits to `user_id` if `Authorization` header present.
+4. In production:
+
+   * Move to a proper DB (Postgres), store aggregated tiles, and implement ST-pyramid tile server for performance.
+   * Use HTTPS, set strong JWT secret, and set proper CORS origins.
+   * Replace Flask dev server with production WSGI or host on Render/Heroku/Azure.
+
+---
+
+# Useful CLI examples (copy-paste)
+
+Submit audit (curl):
+
+```bash
+curl -X POST http://127.0.0.1:5000/api/submit_audit \
+ -H "Content-Type: application/json" \
+ -d '{"lighting":3,"visibility":4,"crowd_density":"medium","cctv":"yes","crime_rate":1,"poi_type":"market","security_present":"no","lat":12.9721,"lng":77.5950}'
+```
+
+Heatmap:
+
+```bash
+curl "http://127.0.0.1:5000/api/heatmap_data?band=night&min_samples=1"
+```
+
+Safe-route:
+
+```bash
+curl -X POST http://127.0.0.1:5000/api/safe_route \
+ -H "Content-Type: application/json" \
+ -d '{"start":[12.9716,77.5946],"end":[13.1000,77.5960],"step_m":50}'
+```
+
+Admin reload:
+
+```bash
+curl -X POST http://127.0.0.1:5000/admin/reload_model -H "X-ADMIN-TOKEN: dev-token"
+```
+
+---
+
+# Troubleshooting common issues
+
+* **`Model pickle warnings`**: scikit-learn version mismatch warnings appear when loading joblib objects created with a different scikit-learn version. Re-train with same sklearn as runtime or accept risk.
+* **Swagger UI shows "No operations defined"**: If using a static OpenAPI object or moving to modular routes, ensure `OPENAPI` is populated and `Swagger(app)` is configured, or use Postman for testing.
+* **`safe_route` returns null scores**: indicates sparse data around sampled points; seed dataset or submit audits in target area to test route scoring.
+* **`train_and_reload.py` reload failures**: ensure Flask server running and `ADMIN_TOKEN` header matches `config.ADMIN_TOKEN`. Use `--admin-token` override if needed.
+* **After history rewrite (git)**: collaborators must `git fetch` then `git reset --hard origin/main` or rebase to update local clones.
+
+---
+
+# One-line contacts & references
+
+* Primary backend entry: `app.py`
+* Major services: `services/heatmap_service.py`, `services/routing_service.py`, `services/audit_service.py`
+* Model artifact: `safety_pipeline.joblib`
+* Retrain helper: `train_and_reload.py`
+* Seed data: `historical_audits.csv`, `synth_data_generator.py`

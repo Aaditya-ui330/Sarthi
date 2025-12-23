@@ -1,0 +1,20 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environments
+.venv/
+.env
+
+# Model/data files
+audits_data.json
+*.db
+*.sqlite3
+
+# System files
+.DS_Store
+Thumbs.db
+
+secrets/firebase-service-account.json
