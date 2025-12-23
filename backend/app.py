@@ -1,9 +1,15 @@
-from flask import Flask, Response, jsonify
+from flask import Flask, Response, jsonify, send_from_directory
 from flask_cors import CORS
 import os
 
+# Absolute path to frontend folder
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "frontend"))
+
 # Create app
-app = Flask(__name__)
+app = Flask( __name__,
+    static_folder=FRONTEND_DIR,
+    static_url_path="")
 CORS(app)
 
 # Register blueprints (routes)
