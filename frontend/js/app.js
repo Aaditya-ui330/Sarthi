@@ -1,4 +1,4 @@
-import { getStoredUser, logout } from '/js/auth.js';
+import { getStoredUser, logout } from './auth.js';
 
 // helper to ensure the user menu stays within the viewport
 function ensureMenuFits(menuEl) {
@@ -60,13 +60,13 @@ export function updateHeaderUserState() {
     const name = user.name || 'User';
     const email = user.email || '';
 
-    avatarImg.src = user.picture || '/assets/default_avatar.png';
+    avatarImg.src = user.picture || 'assets/default_avatar.png';
     avatarImg.alt = name;
 
     // populate menu header
     menuName.textContent = name;
     menuEmail.textContent = email;
-    menuAvatarSm.src = user.picture || '/assets/default_avatar.png';
+    menuAvatarSm.src = user.picture || 'assets/default_avatar.png';
     menuAvatarSm.alt = name;
 
     // toggle function
@@ -129,7 +129,7 @@ export function updateHeaderUserState() {
         try {
           await logout();
         } catch (e) { /* ignore */ }
-        window.location.href = '/';
+        window.location.href = 'index.html';
       };
     }
 

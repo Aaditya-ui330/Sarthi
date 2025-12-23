@@ -180,14 +180,14 @@ export async function oauthSignIn(provider = 'google') {
         saveUserLocally(user);
         try {
           const pathname = window.location.pathname.replace(/\/$/, '');
-          const isAuthPage = pathname === '/auth.html' || pathname.endsWith('/auth.html');
+          const isAuthPage = pathname.endsWith('auth.html');
           const next = getNextParamSafe();
           if (isAuthPage) {
             if (next) {
               window.location.replace(next);
               return;
             } else {
-              window.location.replace('/');
+              window.location.replace('index.html');
               return;
             }
           }
@@ -205,7 +205,7 @@ export async function oauthSignIn(provider = 'google') {
 })();
 
 // helper to redirect respecting ?next=
-export function handleRedirectAfterAuth(defaultPath = '/') {
+export function handleRedirectAfterAuth(defaultPath = 'index.html') {
   try {
     const params = new URLSearchParams(window.location.search);
     const next = params.get('next');

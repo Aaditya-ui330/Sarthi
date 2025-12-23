@@ -2,7 +2,7 @@
 // Map + safe-route UI. Uses /js/api.js for backend calls and Nominatim for geocoding.
 // Updated: cleaned, small toggle animation added.
 
-import api from '/js/api.js';
+import api from './api.js';
 
 const DEFAULT_CENTER = [12.97, 77.59];
 const DEFAULT_ZOOM = 13;

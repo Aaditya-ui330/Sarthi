@@ -1,9 +1,9 @@
 // /frontend/js/dashboard.js
 // Dashboard logic (merged) — includes audits-per-month canvas chart
-// Uses Firebase auth helpers exported from /js/auth.js
+// Uses Firebase auth helpers exported from ./auth.js
 
-import api from '/js/api.js';
-import { getIdToken, getStoredUser, logout, onAuthReady } from '/js/auth.js';
+import api from './api.js';
+import { getIdToken, getStoredUser, logout, onAuthReady } from './auth.js';
 
 const $ = (s) => document.querySelector(s);
 const el = (id) => document.getElementById(id);
@@ -343,7 +343,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await onAuthReady();
     let storedUser = getStoredUser();
     if (!storedUser) {
-      window.location.href = '/auth.html?next=' + encodeURIComponent(window.location.pathname);
+      window.location.href = 'auth.html?next=' + encodeURIComponent(window.location.pathname);
       return;
     }
 
@@ -360,7 +360,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (btnLogout) {
       btnLogout.addEventListener('click', async () => {
         try { await logout(); } catch (e) { /* ignore */ }
-        window.location.href = '/';
+        window.location.href = 'index.html';
       });
     }
 

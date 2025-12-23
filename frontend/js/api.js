@@ -2,7 +2,12 @@
 
 import { getIdToken } from './auth.js';
 
-const DEFAULT_API_BASE = 'http://127.0.0.1:5000/api'; // Set to your backend API base
+const isLocalhost =
+  location.hostname === 'localhost' ||
+  location.hostname === '127.0.0.1';
+const DEFAULT_API_BASE = isLocalhost
+  ? 'http://127.0.0.1:5000/api'
+  : 'https://sarthi-backend.onrender.com/api'; // Set to your backend API base
 const API_BASE = (window.__API_URL__ && window.__API_URL__.replace(/\/$/, '')) || DEFAULT_API_BASE;
 const DEFAULT_TIMEOUT = 30000; // milliseconds
 

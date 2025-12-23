@@ -5,7 +5,8 @@
 // - Adds address autocomplete (Nominatim) and geocoding
 // - Backwards-compatible with raw "lat, lng" entries
 
-import { getIdToken, getStoredUser } from '/js/auth.js';
+import { getIdToken, getStoredUser } from './auth.js';
+import api from './api.js';
 
 const $ = (s) => document.querySelector(s);
 let mapObj = null;
@@ -214,7 +215,7 @@ async function onAddressSelected(displayName, [lat, lon]) {
 // ------------------- Map init -------------------
 async function tryInitMap() {
   try {
-    const mod = await import('/js/map.js');
+    const mod = await import('./map.js');
     if (mod && typeof mod.initSubmitMap === 'function') {
       // When initSubmitMap calls onSelect([lat,lng]) we should set fields
       mapObj = mod.initSubmitMap('auditMap', ([lat, lng]) => {
@@ -277,7 +278,7 @@ async function submitAudit() {
     const stored = getStoredUser();
     if (!stored) {
       const next = encodeURIComponent(window.location.pathname + window.location.search);
-      window.location.href = `/auth.html?mode=signup&next=${next}`;
+      window.location.href = `auth.html?mode=signup&next=${next}`;
       return;
     }
   }
@@ -285,20 +286,7 @@ async function submitAudit() {
   // send to backend
   try {
     setFeedback('Submitting…', 'var(--muted)');
-    const headers = { 'Content-Type': 'application/json' };
-    if (!anonymous) {
-      const token = await getIdToken();
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-    }
-    const res = await fetch('http://127.0.0.1:5000/api/submit_audit', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(payload)
-    });
-    if (!res.ok) {
-      const txt = await res.text().catch(()=>null);
-      throw new Error(txt || `Server error ${res.status}`);
-    }
+    await api.post('/submit_audit', payload, { auth: !anonymous });
     setFeedback('Thanks — your audit was submitted!', 'var(--success)');
     setTimeout(() => clearForm(), 900);
   } catch (err) {

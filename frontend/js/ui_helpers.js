@@ -9,7 +9,7 @@
 let getStoredUser = null;
 let logout = null;
 try {
-  import('/js/auth.js').then(mod => {
+  import('./auth.js').then(mod => {
     if (mod.getStoredUser) getStoredUser = mod.getStoredUser;
     if (mod.logout) logout = mod.logout;
   }).catch(() => {
